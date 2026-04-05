@@ -2,9 +2,7 @@
 #include <QOpenGLShaderProgram>
 #include <cmath>
 
-#ifndef M_PI
 #define M_PI 3.14159265358979323846
-#endif
 
 // ---- Simple 2D shader (x,y,r,g,b) ----
 static const char* vert2D = R"(

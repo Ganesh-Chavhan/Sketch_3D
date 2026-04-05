@@ -8,7 +8,6 @@
 #include <QInputDialog>
 #include <QFrame>
 
-// simple button (no styling)
 static QPushButton* makeBtn(const QString& text)
 {
     return new QPushButton(text);
