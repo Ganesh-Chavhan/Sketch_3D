@@ -1,6 +1,4 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
-
+#pragma once
 #include <QMainWindow>
 
 class GLWidget;
@@ -33,5 +31,3 @@ private:
 
     void updateModeUI(int mode);
 };
-
-#endif // MAINWINDOW_H

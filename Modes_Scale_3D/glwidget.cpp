@@ -120,10 +120,7 @@ void GLWidget::paintGL()
         draw2DShape();
 }
 
-// ----------------------------------------------------------------
 // Convert widget pixel coords → OpenGL NDC-like coords for 2D
-// We'll use a simple ortho projection in the shader instead.
-// ----------------------------------------------------------------
 
 void GLWidget::build2DMesh()
 {
@@ -224,9 +221,7 @@ void GLWidget::draw2DShape()
     m_program2D->release();
 }
 
-// ----------------------------------------------------------------
 // 3D
-// ----------------------------------------------------------------
 
 void GLWidget::build3DMesh()
 {
@@ -350,9 +345,7 @@ void GLWidget::draw3DShape()
     m_program3D->release();
 }
 
-// ----------------------------------------------------------------
 // Mouse events
-// ----------------------------------------------------------------
 
 bool GLWidget::nearCorner(QPointF mouse)
 {
