@@ -92,6 +92,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="meshbuilder.cpp" />
     <QtRcc Include="mainwindow.qrc" />
     <QtMoc Include="mainwindow.h" />
     <ClCompile Include="glwidget.cpp" />
@@ -100,6 +101,9 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="glwidget.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="meshbuilder.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
