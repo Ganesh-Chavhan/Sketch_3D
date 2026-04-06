@@ -2,5 +2,5 @@
   <Configurations>
     <Platform Name="x64" />
   </Configurations>
-  <Project Path="Modes_Scale_3D/Modes_Scale_3D.vcxproj" />
+  <Project Path="Modes_Scale_3D/Modes_Scale_3D.vcxproj" Id="dfcb1c1b-abd7-4dd5-9d78-857a08f7cac3" />
 </Solution>

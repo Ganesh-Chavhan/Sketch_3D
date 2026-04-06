@@ -3,15 +3,17 @@
 
 class GLWidget;
 class QLabel;
+class QPushButton;
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget* parent = nullptr);
+    MainWindow(QWidget* parent = nullptr);
 
 private slots:
+    // Mode buttons
     void onSketchMode();
     void onEditMode();
     void on3DMode();
@@ -20,11 +22,14 @@ private slots:
     void onCreateRectangle();
     void onCreateCircle();
 
+    void onExportSTL();
+
 private:
+    // Main components
     GLWidget* m_gl;
     QLabel* m_statusLabel;
 
-    // Panels
+    // Side panels 
     QWidget* m_sketchPanel;
     QWidget* m_editPanel;
     QWidget* m_3dPanel;

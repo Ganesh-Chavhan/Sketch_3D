@@ -1,22 +1,15 @@
 #pragma once
 #include <QVector>
-#include <QPointF>
+#include "Shape.h"
+#include "DataClass.h"
 
-// All geometry lives here so glwidget.cpp stays small.
-
-struct Shape {
-    int     type;
-    QPointF center;
-    float   width, height, radius;
-    bool    exists;
-};
-
-#define SHAPE_CIRCLE    0
-#define SHAPE_RECTANGLE 1
-#define SHAPE_SQUARE    2
-
-// 2D: x,y,r,g,b per vertex
+// 2D drawing
 void build2D(const Shape& s, QVector<float>& out);
 
-// 3D: x,y,z,r,g,b per vertex
+// 3D mesh building 
+void buildCuboid(DataClass& mesh, float w, float h, float d);
+void buildSphere(DataClass& mesh, float radius, int segments);
+void build3DMesh(const Shape& s, DataClass& mesh);
+
+// 3D drawing (for 3D mode - converts mesh to GPU format)
 void build3D(const Shape& s, QVector<float>& out);

@@ -1,69 +1,228 @@
 #include "meshbuilder.h"
 #include <cmath>
+
 #define PI 3.14159265f
 
-// helper: push one quad as 2 triangles (3D)
-static void addQuad(QVector<float>& v,
-    float x0, float y0, float z0, float x1, float y1, float z1,
-    float x2, float y2, float z2, float x3, float y3, float z3,
-    float r, float g, float b)
-{
-    v << x0 << y0 << z0 << r << g << b << x1 << y1 << z1 << r << g << b << x2 << y2 << z2 << r << g << b;
-    v << x0 << y0 << z0 << r << g << b << x2 << y2 << z2 << r << g << b << x3 << y3 << z3 << r << g << b;
-}
-
-void build2D(const Shape& s, QVector<float>& out)
-{
+// =============================================
+// 2D SHAPE (unchanged - for 2D view)
+// =============================================
+void build2D(const Shape& s, QVector<float>& out) {
     out.clear();
-    float cx = s.center.x(), cy = s.center.y();
+    float cx = s.getCenter().x();
+    float cy = s.getCenter().y();
 
-    if (s.type == SHAPE_CIRCLE) {
-        float r = s.radius;
-        for (int i = 0; i < 48; i++) {
-            float a1 = (float)i / 48 * 2 * PI, a2 = (float)(i + 1) / 48 * 2 * PI;
-            out << cx << cy << 0.2f << 0.8f << 0.7f;
-            out << cx + r * cosf(a1) << cy + r * sinf(a1) << 0.2f << 0.8f << 0.7f;
-            out << cx + r * cosf(a2) << cy + r * sinf(a2) << 0.2f << 0.8f << 0.7f;
+    if (s.getType() == SHAPE_CIRCLE) {
+        // Circle as triangle fan
+        float r = s.getRadius();
+        int segments = 48;
+
+        // Center vertex
+        out << cx << cy << 0.2f << 0.8f << 0.7f;
+
+        // Ring vertices
+        for (int i = 0; i <= segments; i++) {
+            float angle = i * 2 * PI / segments;
+            out << cx + r * cos(angle) << cy + r * sin(angle) << 0.2f << 0.8f << 0.7f;
         }
     }
     else {
-        float hw = s.width / 2, hh = s.height / 2;
-        float x0 = cx - hw, x1 = cx + hw, y0 = cy - hh, y1 = cy + hh;
-        out << x0 << y0 << 0.9f << 0.4f << 0.35f << x1 << y0 << 0.9f << 0.4f << 0.35f << x1 << y1 << 0.9f << 0.4f << 0.35f;
-        out << x0 << y0 << 0.9f << 0.4f << 0.35f << x1 << y1 << 0.9f << 0.4f << 0.35f << x0 << y1 << 0.9f << 0.4f << 0.35f;
+        // Rectangle as 2 triangles
+        float hw = s.getWidth() / 2;
+        float hh = s.getHeight() / 2;
+        float x0 = cx - hw, x1 = cx + hw;
+        float y0 = cy - hh, y1 = cy + hh;
+
+        out << x0 << y0 << 0.9f << 0.4f << 0.35f;
+        out << x1 << y0 << 0.9f << 0.4f << 0.35f;
+        out << x1 << y1 << 0.9f << 0.4f << 0.35f;
+
+        out << x0 << y0 << 0.9f << 0.4f << 0.35f;
+        out << x1 << y1 << 0.9f << 0.4f << 0.35f;
+        out << x0 << y1 << 0.9f << 0.4f << 0.35f;
     }
 }
 
-void build3D(const Shape& s, QVector<float>& out)
-{
+// =============================================
+// CUBOID MESH
+// A box has 8 vertices and 6 faces (12 triangles)
+// =============================================
+void buildCuboid(DataClass& mesh, float w, float h, float d) {
+    mesh.clear();
+
+    float hw = w / 2;  // half width
+    float hh = h / 2;  // half height
+    float hd = d / 2;  // half depth
+
+    // Add 8 corners of the box
+    // findOrAdd ensures no duplicate vertices
+    //
+    //      4-------5
+    //     /|      /|
+    //    / |     / |
+    //   0-------1  |
+    //   |  7----|--6
+    //   | /     | /
+    //   |/      |/
+    //   3-------2
+    //
+    int v0 = mesh.findOrAdd(-hw, hh, hd);  // front top left
+    int v1 = mesh.findOrAdd(hw, hh, hd);  // front top right
+    int v2 = mesh.findOrAdd(hw, -hh, hd);  // front bottom right
+    int v3 = mesh.findOrAdd(-hw, -hh, hd);  // front bottom left
+    int v4 = mesh.findOrAdd(-hw, hh, -hd);  // back top left
+    int v5 = mesh.findOrAdd(hw, hh, -hd);  // back top right
+    int v6 = mesh.findOrAdd(hw, -hh, -hd);  // back bottom right
+    int v7 = mesh.findOrAdd(-hw, -hh, -hd);  // back bottom left
+
+    // Add 12 triangles (2 per face)
+    // Front face
+    mesh.addTriangle(v0, v3, v2);
+    mesh.addTriangle(v0, v2, v1);
+
+    // Back face
+    mesh.addTriangle(v5, v6, v7);
+    mesh.addTriangle(v5, v7, v4);
+
+    // Left face
+    mesh.addTriangle(v4, v7, v3);
+    mesh.addTriangle(v4, v3, v0);
+
+    // Right face
+    mesh.addTriangle(v1, v2, v6);
+    mesh.addTriangle(v1, v6, v5);
+
+    // Top face
+    mesh.addTriangle(v4, v0, v1);
+    mesh.addTriangle(v4, v1, v5);
+
+    // Bottom face
+    mesh.addTriangle(v3, v7, v6);
+    mesh.addTriangle(v3, v6, v2);
+}
+
+// =============================================
+// SPHERE MESH (SIMPLE VERSION)
+// 
+// Think of it like an orange:
+// - Cut horizontal slices (latitude lines)
+// - Cut vertical slices (longitude lines)
+// - Each intersection is a vertex
+// - Connect nearby vertices to make triangles
+//
+// segments = how many slices in each direction
+// =============================================
+void buildSphere(DataClass& mesh, float radius, int segments) {
+    mesh.clear();
+
+    // Step 1: Create all vertices
+    // We go around the sphere like walking on Earth:
+    // - i goes from bottom (south pole) to top (north pole)
+    // - j goes around the equator
+
+    // Store vertex indices in a 2D array for easy triangle building
+    vector<vector<int>> grid(segments + 1, vector<int>(segments + 1));
+
+    for (int i = 0; i <= segments; i++) {
+        // phi = angle from bottom to top (-90 to +90 degrees)
+        float phi = -PI / 2 + PI * i / segments;
+
+        for (int j = 0; j <= segments; j++) {
+            // theta = angle around the equator (0 to 360 degrees)
+            float theta = 2 * PI * j / segments;
+
+            // Convert spherical coordinates to XYZ
+            // This is just the standard sphere formula:
+            float x = radius * cos(phi) * cos(theta);
+            float y = radius * sin(phi);  // Y is up
+            float z = radius * cos(phi) * sin(theta);
+
+            // findOrAdd avoids duplicate vertices at poles and seams
+            grid[i][j] = mesh.findOrAdd(x, y, z);
+        }
+    }
+
+    // Step 2: Create triangles by connecting nearby vertices
+    // Each "square" on the grid becomes 2 triangles
+    //
+    //  (i+1,j) ---- (i+1,j+1)
+    //     |    \       |
+    //     |     \      |
+    //     |      \     |
+    //  (i,j) ---- (i,j+1)
+
+    for (int i = 0; i < segments; i++) {
+        for (int j = 0; j < segments; j++) {
+            int v00 = grid[i][j];
+            int v01 = grid[i][j + 1];
+            int v10 = grid[i + 1][j];
+            int v11 = grid[i + 1][j + 1];
+
+            // Two triangles per grid square
+            mesh.addTriangle(v00, v10, v11);
+            mesh.addTriangle(v00, v11, v01);
+        }
+    }
+}
+
+// =============================================
+// BUILD 3D MESH from 2D shape
+// Circle -> Sphere
+// Rectangle/Square -> Cuboid
+// =============================================
+void build3DMesh(const Shape& s, DataClass& mesh) {
+    if (s.getType() == SHAPE_CIRCLE) {
+        buildSphere(mesh, s.getRadius(), 16);  // 16 segments = smooth enough
+    }
+    else {
+        float depth = 100.0f;  // how thick the box is
+        buildCuboid(mesh, s.getWidth(), s.getHeight(), depth);
+    }
+}
+
+// =============================================
+// BUILD 3D for OpenGL rendering
+// Converts mesh to flat vertex array with colors
+// =============================================
+void build3D(const Shape& s, QVector<float>& out) {
     out.clear();
 
-    if (s.type == SHAPE_CIRCLE) {
-        // sphere
-        float r = s.radius;
-        for (int i = 0; i < 16; i++) {
-            float p1 = (float)i / 16 * PI - PI / 2, p2 = (float)(i + 1) / 16 * PI - PI / 2;
-            for (int j = 0; j < 24; j++) {
-                float t1 = (float)j / 24 * 2 * PI, t2 = (float)(j + 1) / 24 * 2 * PI;
-                float x00 = r * cosf(p1) * cosf(t1), y00 = r * sinf(p1), z00 = r * cosf(p1) * sinf(t1);
-                float x10 = r * cosf(p2) * cosf(t1), y10 = r * sinf(p2), z10 = r * cosf(p2) * sinf(t1);
-                float x11 = r * cosf(p2) * cosf(t2), y11 = r * sinf(p2), z11 = r * cosf(p2) * sinf(t2);
-                float x01 = r * cosf(p1) * cosf(t2), y01 = r * sinf(p1), z01 = r * cosf(p1) * sinf(t2);
-                float t = (float)(i * 24 + j) / (16 * 24);
-                addQuad(out, x00, y00, z00, x10, y10, z10, x11, y11, z11, x01, y01, z01,
-                    0.2f + 0.7f * t, 0.6f - 0.2f * t, 0.9f - 0.5f * t);
+    DataClass mesh;
+    build3DMesh(s, mesh);
+
+    // Convert triangles to colored vertices for GPU
+    for (size_t t = 0; t < mesh.triangles.size(); t++) {
+        Triangle& tri = mesh.triangles[t];
+        Vertex& v0 = mesh.vertices[tri.getA()];
+        Vertex& v1 = mesh.vertices[tri.getB()];
+        Vertex& v2 = mesh.vertices[tri.getC()];
+
+        // Simple coloring: different color per triangle
+        float shade = 0.3f + 0.7f * (float)t / mesh.triangles.size();
+        float r, g, b;
+
+        if (s.getType() == SHAPE_CIRCLE) {
+            // Blue-ish sphere
+            r = 0.2f * shade;
+            g = 0.5f * shade;
+            b = 0.9f * shade;
+        }
+        else {
+            // Color each face differently (2 triangles per face)
+            int face = t / 2;
+            switch (face % 6) {
+            case 0: r = 0.3f; g = 0.5f; b = 0.9f; break;  // blue
+            case 1: r = 0.2f; g = 0.3f; b = 0.6f; break;  // dark blue
+            case 2: r = 0.3f; g = 0.8f; b = 0.4f; break;  // green
+            case 3: r = 0.2f; g = 0.5f; b = 0.3f; break;  // dark green
+            case 4: r = 0.9f; g = 0.8f; b = 0.2f; break;  // yellow
+            case 5: r = 0.9f; g = 0.5f; b = 0.2f; break;  // orange
+            default: r = g = b = 0.5f; break;
             }
         }
-    }
-    else {
-        // cuboid
-        float w = s.width, h = s.height, d = 100;
-        float hw = w / 2, hh = h / 2, hd = d / 2;
-        addQuad(out, -hw, -hh, hd, hw, -hh, hd, hw, hh, hd, -hw, hh, hd, 0.3f, 0.5f, 0.9f);
-        addQuad(out, hw, -hh, -hd, -hw, -hh, -hd, -hw, hh, -hd, hw, hh, -hd, 0.15f, 0.25f, 0.6f);
-        addQuad(out, -hw, -hh, -hd, -hw, -hh, hd, -hw, hh, hd, -hw, hh, -hd, 0.3f, 0.75f, 0.4f);
-        addQuad(out, hw, -hh, hd, hw, -hh, -hd, hw, hh, -hd, hw, hh, hd, 0.15f, 0.45f, 0.2f);
-        addQuad(out, -hw, hh, hd, hw, hh, hd, hw, hh, -hd, -hw, hh, -hd, 0.9f, 0.8f, 0.2f);
-        addQuad(out, -hw, -hh, -hd, hw, -hh, -hd, hw, -hh, hd, -hw, -hh, hd, 0.85f, 0.45f, 0.1f);
+
+        // Add 3 vertices with color (format: x, y, z, r, g, b)
+        out << v0.getX() << v0.getY() << v0.getZ() << r << g << b;
+        out << v1.getX() << v1.getY() << v1.getZ() << r << g << b;
+        out << v2.getX() << v2.getY() << v2.getZ() << r << g << b;
     }
 }
