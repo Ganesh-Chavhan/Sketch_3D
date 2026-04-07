@@ -18,18 +18,22 @@ private slots:
     void onEditMode();
     void on3DMode();
 
+    // Shape buttons
     void onCreateSquare();
     void onCreateRectangle();
     void onCreateCircle();
 
+    // Export/Load buttons
     void onExportSTL();
+    void onLoadSTL();
+
+    void onClear();
 
 private:
-    // Main components
     GLWidget* m_gl;
     QLabel* m_statusLabel;
 
-    // Side panels 
+    // Side panels
     QWidget* m_sketchPanel;
     QWidget* m_editPanel;
     QWidget* m_3dPanel;

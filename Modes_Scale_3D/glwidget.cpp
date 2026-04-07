@@ -1,7 +1,6 @@
 #include "glwidget.h"
 #include <cmath>
 
-// Simple Shaders (GLSL)
 // 2D shader: position (x,y) + color (r,g,b)
 static const char* vert2D = R"(
 attribute vec2 aPos;
@@ -50,7 +49,6 @@ GLWidget::~GLWidget()
     delete m_prog3D;
     doneCurrent();
 }
-
 void GLWidget::setMode(int mode)
 {
     m_mode = mode;
@@ -80,6 +78,37 @@ bool GLWidget::exportSTL(const QString& path)
     return m_mesh.exportSTL(path.toStdString());
 }
 
+bool GLWidget::loadSTL(const QString& path)
+{
+    if (!m_mesh.loadSTL(path.toStdString())) {
+        return false;
+    }
+
+    m_shape.setExists(true);
+    m_shape.setType(-1);  // -1 = loaded
+
+    m_mode = MODE_3D;
+    update();
+    return true;
+}
+
+void GLWidget::setPendingShape(int type)
+{
+    m_pendingShapeType = type;
+}
+
+void GLWidget::clearAll()
+{
+    m_shape.setExists(false);
+    m_mesh.clear();
+    m_verts2D.clear();
+    m_verts3D.clear();
+    m_pendingShapeType = -1;
+    m_isDrawing = false;
+    update();
+}
+
+// OpenGL Setup
 void GLWidget::initializeGL()
 {
     initializeOpenGLFunctions();
@@ -149,7 +178,31 @@ void GLWidget::draw2DShape()
 // 3D Drawing
 void GLWidget::draw3DShape()
 {
-    build3D(m_shape, m_verts3D);
+    // For loaded STL files (type = -1), use m_mesh directly
+    // For created shapes, build the mesh first
+    if (m_shape.getType() == -1) {
+        // Convert loaded mesh to vertex array
+        m_verts3D.clear();
+        for (size_t t = 0; t < m_mesh.triangles.size(); t++) {
+            Triangle& tri = m_mesh.triangles[t];
+            Vertex& v0 = m_mesh.vertices[tri.getA()];
+            Vertex& v1 = m_mesh.vertices[tri.getB()];
+            Vertex& v2 = m_mesh.vertices[tri.getC()];
+
+            // Color based on triangle index (gives nice shading)
+            float shade = 0.4f + 0.6f * (float)t / m_mesh.triangles.size();
+            float r = 0.7f * shade;
+            float g = 0.7f * shade;
+            float b = 0.8f * shade;
+
+            m_verts3D << v0.getX() << v0.getY() << v0.getZ() << r << g << b;
+            m_verts3D << v1.getX() << v1.getY() << v1.getZ() << r << g << b;
+            m_verts3D << v2.getX() << v2.getY() << v2.getZ() << r << g << b;
+        }
+    }
+    else {
+        build3D(m_shape, m_verts3D);
+    }
 
     // Setup camera matrices
     QMatrix4x4 proj, view, model;
@@ -215,6 +268,13 @@ void GLWidget::mousePressEvent(QMouseEvent* e)
 {
     m_lastMouse = e->pos();
 
+    // Sketch mode: start drawing if a shape type is pending
+    if (m_mode == MODE_SKETCH && m_pendingShapeType >= 0) {
+        m_isDrawing = true;
+        m_drawStart = e->pos();
+        return;
+    }
+
     if (m_mode == MODE_EDIT && m_shape.exists() && nearCorner(e->pos())) {
         m_dragging = true;
     }
@@ -232,6 +292,35 @@ void GLWidget::mouseMoveEvent(QMouseEvent* e)
         return;
     }
 
+    // Sketch mode: preview shape while dragging
+    if (m_mode == MODE_SKETCH && m_isDrawing) {
+        float dx = e->pos().x() - m_drawStart.x();
+        float dy = e->pos().y() - m_drawStart.y();
+        float cx = (m_drawStart.x() + e->pos().x()) / 2.0f;
+        float cy = (m_drawStart.y() + e->pos().y()) / 2.0f;
+
+        m_shape.setType(m_pendingShapeType);
+        m_shape.setCenter(QPointF(cx, cy));
+        m_shape.setExists(true);
+
+        if (m_pendingShapeType == SHAPE_CIRCLE) {
+            float radius = sqrt(dx * dx + dy * dy) / 2.0f;
+            m_shape.setRadius(qMax(10.0f, radius));
+        }
+        else if (m_pendingShapeType == SHAPE_SQUARE) {
+            float side = qMax((float)fabs(dx), (float)fabs(dy));
+            m_shape.setWidth(qMax(20.0f, side));
+            m_shape.setHeight(qMax(20.0f, side));
+        }
+        else {  // SHAPE_RECTANGLE
+            m_shape.setWidth(qMax(20.0f, (float)fabs(dx)));
+            m_shape.setHeight(qMax(20.0f, (float)fabs(dy)));
+        }
+
+        update();
+        return;
+    }
+
     // Edit mode: resize the shape
     if (m_mode == MODE_EDIT && m_dragging) {
         float dx = e->pos().x() - m_shape.getCenter().x();
@@ -241,13 +330,13 @@ void GLWidget::mouseMoveEvent(QMouseEvent* e)
             m_shape.setRadius(qMax(10.0f, (float)sqrt(dx * dx + dy * dy)));
         }
         else if (m_shape.getType() == SHAPE_SQUARE) {
-            float size = qMax(20.0f, fmax(fabs(dx), fabs(dy)) * 2);
+            float size = qMax(20.0f, (float)fmax(fabs(dx), fabs(dy)) * 2);
             m_shape.setWidth(size);
             m_shape.setHeight(size);
         }
         else {
-            m_shape.setWidth(qMax(20.0f, fabs(dx) * 2));
-            m_shape.setHeight(qMax(20.0f, fabs(dy) * 2));
+            m_shape.setWidth(qMax(20.0f, (float)fabs(dx) * 2));
+            m_shape.setHeight(qMax(20.0f, (float)fabs(dy) * 2));
         }
 
         // Rebuild mesh after resize
@@ -259,5 +348,12 @@ void GLWidget::mouseMoveEvent(QMouseEvent* e)
 
 void GLWidget::mouseReleaseEvent(QMouseEvent*)
 {
+    // Finalize shape on release in sketch mode
+    if (m_mode == MODE_SKETCH && m_isDrawing && m_shape.exists()) {
+        build3DMesh(m_shape, m_mesh);
+        m_pendingShapeType = -1;
+    }
+
+    m_isDrawing = false;
     m_dragging = false;
 }

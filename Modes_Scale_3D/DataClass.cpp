@@ -46,7 +46,6 @@ bool DataClass::exportSTL(const string& filename) {
     file << "solid mesh\n";
 
     for (const Triangle& tri : triangles) {
-        // Get vertex data using getters
         Vertex v0 = vertices[tri.getA()];
         Vertex v1 = vertices[tri.getB()];
         Vertex v2 = vertices[tri.getC()];
@@ -82,6 +81,42 @@ bool DataClass::exportSTL(const string& filename) {
     file.close();
     return true;
 }
+
+// Load from ASCII STL file
+bool DataClass::loadSTL(const string& filename) {
+    ifstream file(filename);
+    if (!file.is_open()) return false;
+
+    clear();
+
+    string word;
+    float x, y, z;
+    int id[3];
+    int count = 0;
+
+    while (file >> word) {
+        if (word == "vertex")
+        {
+            file >> x >> y >> z;
+
+            if (count < 3) {
+                id[count] = findOrAdd(x, y, z);
+                count++;
+            }
+        }
+        if (word == "endfacet")
+        {
+            addTriangle(id[0], id[1], id[2]);
+            count = 0;
+        }
+    }
+
+    file.close();
+
+    qDebug() << "Loaded STL:" << vertices.size() << "vertices," << triangles.size() << "triangles";
+    return triangles.size() > 0;
+}
+
 
 void DataClass::printInfo() {
     qDebug() << "=== Mesh Info ===";

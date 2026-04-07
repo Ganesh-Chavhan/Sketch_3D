@@ -7,11 +7,16 @@
 #include "meshbuilder.h"
 #include "DataClass.h"
 
+// =============================================
 // Modes
+// =============================================
 #define MODE_SKETCH 0
 #define MODE_EDIT   1
 #define MODE_3D     2
 
+// =============================================
+// OpenGL Widget - handles all rendering
+// =============================================
 class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
     Q_OBJECT
@@ -28,8 +33,13 @@ public:
     void createShape(int type, float w, float h, float r);
     bool hasShape() const { return m_shape.exists(); }
 
-    // STL export
+    // Mouse-based shape creation
+    void setPendingShape(int type);
+    void clearAll();
+
+    // STL export/import
     bool exportSTL(const QString& path);
+    bool loadSTL(const QString& path);
 
 protected:
     void initializeGL() override;
@@ -50,11 +60,18 @@ private:
     QPointF m_lastMouse;
     float m_rotX = 25, m_rotY = 30;
 
+    // OpenGL stuff
     QOpenGLShaderProgram* m_prog2D = nullptr;
     QOpenGLShaderProgram* m_prog3D = nullptr;
     QOpenGLBuffer m_vbo;
     QVector<float> m_verts2D, m_verts3D;
 
+    // Drawing state
+    bool m_isDrawing = false;
+    int m_pendingShapeType = -1;
+    QPointF m_drawStart;
+
+    // Helper functions
     void draw2DShape();
     void draw3DShape();
     bool nearCorner(QPointF mouse);

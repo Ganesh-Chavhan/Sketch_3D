@@ -3,9 +3,7 @@
 
 #define PI 3.14159265f
 
-// =============================================
-// 2D SHAPE (unchanged - for 2D view)
-// =============================================
+// 2D SHAPE
 void build2D(const Shape& s, QVector<float>& out) {
     out.clear();
     float cx = s.getCenter().x();
@@ -42,37 +40,22 @@ void build2D(const Shape& s, QVector<float>& out) {
     }
 }
 
-// =============================================
-// CUBOID MESH
-// A box has 8 vertices and 6 faces (12 triangles)
-// =============================================
+// CUBOID MESH 8 vert and 6 faces (12 triangles)
 void buildCuboid(DataClass& mesh, float w, float h, float d) {
     mesh.clear();
 
-    float hw = w / 2;  // half width
-    float hh = h / 2;  // half height
-    float hd = d / 2;  // half depth
+    float hw = w / 2;  
+    float hh = h / 2;  
+    float hd = d / 2; 
 
-    // Add 8 corners of the box
-    // findOrAdd ensures no duplicate vertices
-    //
-    //      4-------5
-    //     /|      /|
-    //    / |     / |
-    //   0-------1  |
-    //   |  7----|--6
-    //   | /     | /
-    //   |/      |/
-    //   3-------2
-    //
-    int v0 = mesh.findOrAdd(-hw, hh, hd);  // front top left
-    int v1 = mesh.findOrAdd(hw, hh, hd);  // front top right
-    int v2 = mesh.findOrAdd(hw, -hh, hd);  // front bottom right
-    int v3 = mesh.findOrAdd(-hw, -hh, hd);  // front bottom left
-    int v4 = mesh.findOrAdd(-hw, hh, -hd);  // back top left
-    int v5 = mesh.findOrAdd(hw, hh, -hd);  // back top right
-    int v6 = mesh.findOrAdd(hw, -hh, -hd);  // back bottom right
-    int v7 = mesh.findOrAdd(-hw, -hh, -hd);  // back bottom left
+    int v0 = mesh.findOrAdd(-hw, hh, hd);  
+    int v1 = mesh.findOrAdd(hw, hh, hd);  
+    int v2 = mesh.findOrAdd(hw, -hh, hd); 
+    int v3 = mesh.findOrAdd(-hw, -hh, hd);  
+    int v4 = mesh.findOrAdd(-hw, hh, -hd);  
+    int v5 = mesh.findOrAdd(hw, hh, -hd); 
+    int v6 = mesh.findOrAdd(hw, -hh, -hd);  
+    int v7 = mesh.findOrAdd(-hw, -hh, -hd);  
 
     // Add 12 triangles (2 per face)
     // Front face
@@ -100,24 +83,9 @@ void buildCuboid(DataClass& mesh, float w, float h, float d) {
     mesh.addTriangle(v3, v6, v2);
 }
 
-// =============================================
-// SPHERE MESH (SIMPLE VERSION)
-// 
-// Think of it like an orange:
-// - Cut horizontal slices (latitude lines)
-// - Cut vertical slices (longitude lines)
-// - Each intersection is a vertex
-// - Connect nearby vertices to make triangles
-//
-// segments = how many slices in each direction
-// =============================================
+// SPHERE MESH
 void buildSphere(DataClass& mesh, float radius, int segments) {
     mesh.clear();
-
-    // Step 1: Create all vertices
-    // We go around the sphere like walking on Earth:
-    // - i goes from bottom (south pole) to top (north pole)
-    // - j goes around the equator
 
     // Store vertex indices in a 2D array for easy triangle building
     vector<vector<int>> grid(segments + 1, vector<int>(segments + 1));
@@ -130,25 +98,14 @@ void buildSphere(DataClass& mesh, float radius, int segments) {
             // theta = angle around the equator (0 to 360 degrees)
             float theta = 2 * PI * j / segments;
 
-            // Convert spherical coordinates to XYZ
-            // This is just the standard sphere formula:
+            //  standard sphere formula:
             float x = radius * cos(phi) * cos(theta);
-            float y = radius * sin(phi);  // Y is up
+            float y = radius * sin(phi); 
             float z = radius * cos(phi) * sin(theta);
 
-            // findOrAdd avoids duplicate vertices at poles and seams
             grid[i][j] = mesh.findOrAdd(x, y, z);
         }
     }
-
-    // Step 2: Create triangles by connecting nearby vertices
-    // Each "square" on the grid becomes 2 triangles
-    //
-    //  (i+1,j) ---- (i+1,j+1)
-    //     |    \       |
-    //     |     \      |
-    //     |      \     |
-    //  (i,j) ---- (i,j+1)
 
     for (int i = 0; i < segments; i++) {
         for (int j = 0; j < segments; j++) {
@@ -164,25 +121,18 @@ void buildSphere(DataClass& mesh, float radius, int segments) {
     }
 }
 
-// =============================================
 // BUILD 3D MESH from 2D shape
-// Circle -> Sphere
-// Rectangle/Square -> Cuboid
-// =============================================
 void build3DMesh(const Shape& s, DataClass& mesh) {
     if (s.getType() == SHAPE_CIRCLE) {
-        buildSphere(mesh, s.getRadius(), 16);  // 16 segments = smooth enough
+        buildSphere(mesh, s.getRadius(), 16);  
     }
     else {
-        float depth = 100.0f;  // how thick the box is
+        float depth = 100.0f;  // thickness 
         buildCuboid(mesh, s.getWidth(), s.getHeight(), depth);
     }
 }
 
-// =============================================
-// BUILD 3D for OpenGL rendering
-// Converts mesh to flat vertex array with colors
-// =============================================
+// BUILD 3D for OpenGL rendering mesh to flat vertex array with colors
 void build3D(const Shape& s, QVector<float>& out) {
     out.clear();
 
@@ -220,7 +170,7 @@ void build3D(const Shape& s, QVector<float>& out) {
             }
         }
 
-        // Add 3 vertices with color (format: x, y, z, r, g, b)
+        // Add 3 vertices 
         out << v0.getX() << v0.getY() << v0.getZ() << r << g << b;
         out << v1.getX() << v1.getY() << v1.getZ() << r << g << b;
         out << v2.getX() << v2.getY() << v2.getZ() << r << g << b;

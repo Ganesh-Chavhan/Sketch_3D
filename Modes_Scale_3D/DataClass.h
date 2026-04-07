@@ -23,6 +23,8 @@ public:
 
     bool exportSTL(const string& filename);
 
+    bool loadSTL(const string& filename);
+
     void printInfo();
 
 private:

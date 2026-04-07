@@ -10,6 +10,7 @@
 #include <QMessageBox>
 #include <QFrame>
 
+
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
 {
     setWindowTitle("Sketch 3D");
@@ -25,10 +26,12 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
     leftPanel->setFixedWidth(200);
     QVBoxLayout* leftLayout = new QVBoxLayout(leftPanel);
 
+    // Title
     QLabel* title = new QLabel("Sketch 3D");
     title->setAlignment(Qt::AlignCenter);
     leftLayout->addWidget(title);
 
+    // Separator
     QFrame* line = new QFrame;
     line->setFrameShape(QFrame::HLine);
     leftLayout->addWidget(line);
@@ -73,18 +76,30 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
     leftLayout->addWidget(m_3dPanel);
     m_3dPanel->hide();
 
+    // Separator before Load STL
+    QFrame* line2 = new QFrame;
+    line2->setFrameShape(QFrame::HLine);
+    leftLayout->addWidget(line2);
+
+    // Load STL button
+    QPushButton* btnLoadSTL = new QPushButton("Load STL");
+    leftLayout->addWidget(btnLoadSTL);
+
+    QPushButton* btnClear = new QPushButton("Clear Scrren");
+    leftLayout->addWidget(btnClear);
+
     // Spacer + Status
     leftLayout->addStretch();
     m_statusLabel = new QLabel("Select a mode");
     leftLayout->addWidget(m_statusLabel);
 
-    // ---- OPENGL WIDGET ----
+    // OPENGL WIDGET
     m_gl = new GLWidget(central);
     m_gl->setMinimumSize(600, 500);
 
     mainLayout->addWidget(leftPanel);
     mainLayout->addWidget(m_gl, 1);
- 
+
     connect(btnSketch, &QPushButton::clicked, this, &MainWindow::onSketchMode);
     connect(btnEdit, &QPushButton::clicked, this, &MainWindow::onEditMode);
     connect(btn3D, &QPushButton::clicked, this, &MainWindow::on3DMode);
@@ -94,6 +109,9 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
     connect(btnCircle, &QPushButton::clicked, this, &MainWindow::onCreateCircle);
 
     connect(btnExport, &QPushButton::clicked, this, &MainWindow::onExportSTL);
+    connect(btnLoadSTL, &QPushButton::clicked, this, &MainWindow::onLoadSTL);
+
+    connect(btnClear, &QPushButton::clicked, this, &MainWindow::onClear);
 }
 
 // Mode Switching
@@ -128,35 +146,20 @@ void MainWindow::on3DMode()
 // Shape Creation
 void MainWindow::onCreateSquare()
 {
-    bool ok;
-    int side = QInputDialog::getInt(this, "Square", "Side length:", 100, 20, 500, 10, &ok);
-    if (!ok) return;
-
-    m_gl->createShape(SHAPE_SQUARE, side, side, 0);
-    m_statusLabel->setText("Square created");
+    m_gl->setPendingShape(SHAPE_SQUARE);
+    m_statusLabel->setText("Click and drag to draw a square");
 }
 
 void MainWindow::onCreateRectangle()
 {
-    bool ok;
-    int w = QInputDialog::getInt(this, "Rectangle", "Width:", 150, 20, 600, 10, &ok);
-    if (!ok) return;
-
-    int h = QInputDialog::getInt(this, "Rectangle", "Height:", 100, 20, 600, 10, &ok);
-    if (!ok) return;
-
-    m_gl->createShape(SHAPE_RECTANGLE, w, h, 0);
-    m_statusLabel->setText("Rectangle created");
+    m_gl->setPendingShape(SHAPE_RECTANGLE);
+    m_statusLabel->setText("Click and drag to draw a rectangle");
 }
 
 void MainWindow::onCreateCircle()
 {
-    bool ok;
-    int r = QInputDialog::getInt(this, "Circle", "Radius:", 80, 10, 300, 5, &ok);
-    if (!ok) return;
-
-    m_gl->createShape(SHAPE_CIRCLE, 0, 0, r);
-    m_statusLabel->setText("Circle created");
+    m_gl->setPendingShape(SHAPE_CIRCLE);
+    m_statusLabel->setText("Click and drag to draw a circle");
 }
 
 // STL Export
@@ -186,4 +189,26 @@ void MainWindow::onExportSTL()
     else {
         QMessageBox::critical(this, "Error", "Failed to save STL file");
     }
+}
+
+// STL Load
+void MainWindow::onLoadSTL()
+{
+    QString path = QFileDialog::getOpenFileName(this, "Open STL", "", "STL Files (*.stl)");
+    if (path.isEmpty()) return;
+
+    if (m_gl->loadSTL(path)) {
+        // Switch UI to 3D mode
+        updateModeUI(MODE_3D);
+        m_statusLabel->setText("Loaded: " + QFileInfo(path).fileName());
+    }
+    else {
+        QMessageBox::critical(this, "Error", "Failed to load STL file.\nMake sure it's an ASCII STL file.");
+    }
+}
+
+void MainWindow::onClear()
+{
+    m_gl->clearAll();
+    m_statusLabel->setText("Screen cleared");
 }
