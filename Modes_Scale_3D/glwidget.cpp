@@ -55,20 +55,6 @@ void GLWidget::setMode(int mode)
     update();
 }
 
-void GLWidget::createShape(int type, float w, float h, float r)
-{
-    m_shape.setType(type);
-    m_shape.setCenter(QPointF(width() / 2.0, height() / 2.0));
-    m_shape.setWidth(w);
-    m_shape.setHeight(h);
-    m_shape.setRadius(r);
-    m_shape.setExists(true);
-
-    // Build mesh for 3D
-    build3DMesh(m_shape, m_mesh);
-    update();
-}
-
 bool GLWidget::exportSTL(const QString& path)
 {
     if (!m_shape.exists() || m_mode != MODE_3D) return false;
@@ -179,9 +165,7 @@ void GLWidget::draw2DShape()
 void GLWidget::draw3DShape()
 {
     // For loaded STL files (type = -1), use m_mesh directly
-    // For created shapes, build the mesh first
     if (m_shape.getType() == -1) {
-        // Convert loaded mesh to vertex array
         m_verts3D.clear();
         for (size_t t = 0; t < m_mesh.triangles.size(); t++) {
             Triangle& tri = m_mesh.triangles[t];
@@ -189,8 +173,8 @@ void GLWidget::draw3DShape()
             Vertex& v1 = m_mesh.vertices[tri.getB()];
             Vertex& v2 = m_mesh.vertices[tri.getC()];
 
-            // Color based on triangle index (gives nice shading)
             float shade = 0.4f + 0.6f * (float)t / m_mesh.triangles.size();
+            //float shade = 0.5;
             float r = 0.7f * shade;
             float g = 0.7f * shade;
             float b = 0.8f * shade;
@@ -339,8 +323,6 @@ void GLWidget::mouseMoveEvent(QMouseEvent* e)
             m_shape.setHeight(qMax(20.0f, (float)fabs(dy) * 2));
         }
 
-        // Rebuild mesh after resize
-        build3DMesh(m_shape, m_mesh);
         m_lastMouse = e->pos();
         update();
     }
@@ -350,7 +332,6 @@ void GLWidget::mouseReleaseEvent(QMouseEvent*)
 {
     // Finalize shape on release in sketch mode
     if (m_mode == MODE_SKETCH && m_isDrawing && m_shape.exists()) {
-        build3DMesh(m_shape, m_mesh);
         m_pendingShapeType = -1;
     }
 

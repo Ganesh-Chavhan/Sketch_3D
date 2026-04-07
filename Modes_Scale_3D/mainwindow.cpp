@@ -175,7 +175,7 @@ void MainWindow::onExportSTL()
         return;
     }
 
-    QString path = QFileDialog::getSaveFileName(this, "Save STL", "model.stl", "STL Files (*.stl)");
+    QString path = QFileDialog::getSaveFileName(this, "Save STL", "model_id.stl", "STL Files (*.stl)");
     if (path.isEmpty()) return;
 
     if (!path.endsWith(".stl", Qt::CaseInsensitive)) {

@@ -7,16 +7,11 @@
 #include "meshbuilder.h"
 #include "DataClass.h"
 
-// =============================================
 // Modes
-// =============================================
 #define MODE_SKETCH 0
 #define MODE_EDIT   1
 #define MODE_3D     2
 
-// =============================================
-// OpenGL Widget - handles all rendering
-// =============================================
 class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
     Q_OBJECT

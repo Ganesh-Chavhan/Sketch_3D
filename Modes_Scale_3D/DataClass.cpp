@@ -15,16 +15,10 @@ int DataClass::snapToGrid(float value) {
 }
 
 int DataClass::findOrAdd(float x, float y, float z) {
-    // Snap coordinates to grid cells
-    int gx = snapToGrid(x);
-    int gy = snapToGrid(y);
-    int gz = snapToGrid(z);
-
-    auto key = make_tuple(gx, gy, gz);
-
-    auto it = vertexMap.find(key);
-    if (it != vertexMap.end()) {
-        return it->second;
+    
+    string key = to_string(snapToGrid(x)) + "," + to_string(snapToGrid(y)) + "," + to_string(snapToGrid(z));
+    if (vertexMap.find(key) != vertexMap.end()) {
+        return vertexMap[key];
     }
 
     // not foind add new vertex

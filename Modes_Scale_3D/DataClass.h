@@ -28,7 +28,7 @@ public:
     void printInfo();
 
 private:
-    map<tuple<int, int, int>, int> vertexMap;
+    map<string, int> vertexMap;
 
     int snapToGrid(float value);
 };

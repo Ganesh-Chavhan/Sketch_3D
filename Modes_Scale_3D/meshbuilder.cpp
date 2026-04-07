@@ -124,7 +124,7 @@ void buildSphere(DataClass& mesh, float radius, int segments) {
 // BUILD 3D MESH from 2D shape
 void build3DMesh(const Shape& s, DataClass& mesh) {
     if (s.getType() == SHAPE_CIRCLE) {
-        buildSphere(mesh, s.getRadius(), 16);  
+        buildSphere(mesh, s.getRadius(), 32);  
     }
     else {
         float depth = 100.0f;  // thickness 
