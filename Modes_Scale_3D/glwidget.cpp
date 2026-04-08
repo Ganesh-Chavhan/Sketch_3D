@@ -161,7 +161,11 @@ void GLWidget::draw2DShape()
     m_prog2D->release();
 }
 
+
+
 // 3D Drawing
+// here load STL whose data stored in Triangulation DS
+
 void GLWidget::draw3DShape()
 {
     // For loaded STL files (type = -1), use m_mesh directly
@@ -173,11 +177,11 @@ void GLWidget::draw3DShape()
             Vertex& v1 = m_mesh.vertices[tri.getB()];
             Vertex& v2 = m_mesh.vertices[tri.getC()];
 
-            float shade = 0.4f + 0.6f * (float)t / m_mesh.triangles.size();
+            //float shade = 0.4f + 0.6f * (float)t / m_mesh.triangles.size();
             //float shade = 0.5;
-            float r = 0.7f * shade;
-            float g = 0.7f * shade;
-            float b = 0.8f * shade;
+            float r = 1.0f;
+            float g = 0.5f;
+            float b = 0.0f;
 
             m_verts3D << v0.getX() << v0.getY() << v0.getZ() << r << g << b;
             m_verts3D << v1.getX() << v1.getY() << v1.getZ() << r << g << b;
@@ -214,7 +218,9 @@ void GLWidget::draw3DShape()
     m_prog3D->release();
 }
 
+
 // Mouse Interaction
+
 bool GLWidget::nearCorner(QPointF mouse)
 {
     float cx = m_shape.getCenter().x();

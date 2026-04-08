@@ -94,6 +94,8 @@
   <ItemGroup>
     <ClCompile Include="DataClass.cpp" />
     <ClCompile Include="meshbuilder.cpp" />
+    <ClCompile Include="Triangle.cpp" />
+    <ClCompile Include="Vertex.cpp" />
     <QtRcc Include="mainwindow.qrc" />
     <QtMoc Include="mainwindow.h" />
     <ClCompile Include="glwidget.cpp" />

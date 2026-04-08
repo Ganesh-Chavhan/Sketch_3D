@@ -24,7 +24,7 @@ void build2D(const Shape& s, QVector<float>& out) {
         }
     }
     else {
-        // Rectangle as 2 triangles
+        // Rectangle OR  Square  as 2 triangles
         float hw = s.getWidth() / 2;
         float hh = s.getHeight() / 2;
         float x0 = cx - hw, x1 = cx + hw;
@@ -127,8 +127,13 @@ void build3DMesh(const Shape& s, DataClass& mesh) {
         buildSphere(mesh, s.getRadius(), 32);  
     }
     else {
-        float depth = 100.0f;  // thickness 
-        buildCuboid(mesh, s.getWidth(), s.getHeight(), depth);
+        if (s.getType() == SHAPE_SQUARE) {
+            buildCuboid(mesh, s.getWidth(), s.getHeight(), s.getHeight());
+        }
+        else {
+            float depth = 100.0f;  
+            buildCuboid(mesh, s.getWidth(), s.getHeight(), depth);
+        }
     }
 }
 
@@ -157,7 +162,6 @@ void build3D(const Shape& s, QVector<float>& out) {
             b = 0.9f * shade;
         }
         else {
-            // Color each face differently (2 triangles per face)
             int face = t / 2;
             switch (face % 6) {
             case 0: r = 0.3f; g = 0.5f; b = 0.9f; break;  // blue

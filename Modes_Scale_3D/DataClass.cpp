@@ -9,7 +9,7 @@ void DataClass::clear() {
     vertexMap.clear(); 
 }
 
-// Convert float to grid cell for tolerance-based comparison
+// Convert float to grid cell
 int DataClass::snapToGrid(float value) {
     return static_cast<int>(round(value / VERTEX_TOLERANCE));
 }

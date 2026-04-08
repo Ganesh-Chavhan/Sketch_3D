@@ -2,18 +2,18 @@
 
 class Triangle {
 private:
-    int m_a, m_b, m_c;
+    int m_a;
+    int m_b;
+    int m_c;
 
 public:
-    Triangle(int a = 0, int b = 0, int c = 0)
-        : m_a(a), m_b(b), m_c(c) {
-    }
+    Triangle(int a = 0, int b = 0, int c = 0);
 
-    int getA() const { return m_a; }
-    int getB() const { return m_b; }
-    int getC() const { return m_c; }
+    int getA() const;
+    int getB() const;
+    int getC() const;
 
-    void setA(int a) { m_a = a; }
-    void setB(int b) { m_b = b; }
-    void setC(int c) { m_c = c; }
+    void setA(int a);
+    void setB(int b);
+    void setC(int c);
 };
